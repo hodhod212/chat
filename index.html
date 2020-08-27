@@ -131,9 +131,20 @@
         <div class="chat-section">
           <ul id="conversation"></ul>
           <form>
-            <input id="data" autocomplete="off" /><button id="datasend">
-              Send
-            </button>
+            <input
+              list="browsers"
+              name="browser"
+              id="data"
+              autocomplete="off"
+            />
+            <datalist id="browsers">
+              <option value="/" />
+              <option value="/love" />
+              <option value="/hate" />
+              <option value="/friend" />
+              <option value="/hej" />
+            </datalist>
+            <button id="datasend">Send</button>
           </form>
         </div>
       </div>
