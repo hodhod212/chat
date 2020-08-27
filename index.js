@@ -9,7 +9,7 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 var usernames = {};
-var rooms = ["room1", "room2", "room3"];
+var rooms = ["room1", "Nature", "City"];
 io.sockets.on("connection", function (socket) {
   socket.on("adduser", function (username) {
     socket.username = username;

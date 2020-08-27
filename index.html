@@ -61,14 +61,24 @@
       #messages li {
         padding: 5px 10px;
       }
-      #messages li:nth-child(odd) {
+      p:nth-child(odd) {
         background: #eee;
       }
-      p {
-        margin-bottom: 10px;
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
       }
+
+      p {
+        margin: 5px;
+        padding: 5px;
+        border-radius: 7px;
+      }
+
       .chat-section {
         display: none;
+        margin-bottom: 100px;
       }
       #conversation {
         margin: 5px;
@@ -78,9 +88,16 @@
   </head>
   <body>
     <div style="display: flex">
-      <div style="width: 20%; border-right: 1px solid black; margin-left: 5px">
+      <div
+        style="
+          width: 20%;
+          min-width: 100px;
+          border-right: 1px solid black;
+          margin-left: 5px;
+        "
+      >
         <p><b>ROOMS</b></p>
-        <div id="rooms">room0</div>
+        <div id="rooms">room1</div>
       </div>
       <!--  -->
       <div>
@@ -172,7 +189,9 @@
 
       // listener, whenever the server emits 'updatechat', this updates the chat body
       socket.on("updatechat", function (username, data) {
-        $("#conversation").append("<b>" + username + ":</b> " + data + "<br>");
+        $("#conversation").append(
+          "<p>" + "<b>" + username + ":</b> " + data + "<br>" + "</p>"
+        );
       });
 
       socket.on("updaterooms", function (rooms, current_room) {
