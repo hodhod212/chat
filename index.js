@@ -10,6 +10,9 @@ app.get("/", (req, res) => {
 });
 var usernames = {};
 var rooms = ["room1", "Nature", "City"];
+//
+
+//
 io.sockets.on("connection", function (socket) {
   socket.on("adduser", function (username) {
     socket.username = username;
@@ -25,7 +28,17 @@ io.sockets.on("connection", function (socket) {
   socket.on("sendchat", function (data) {
     io.sockets.in(socket.room).emit("updatechat", socket.username, data);
   });
-
+  //
+  io.on("connection", function (socket) {
+    fs.readFile("image.png", function (err, data) {
+      socket.emit("imageConversionByClient", { image: true, buffer: data });
+      socket.emit(
+        "imageConversionByServer",
+        "data:image/png;base64," + data.toString("base64")
+      );
+    });
+  });
+  //
   socket.on("switchRoom", function (newroom) {
     socket.leave(socket.room);
     socket.join(newroom);
