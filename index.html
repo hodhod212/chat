@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- Latest compiled and minified CSS -->
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+      crossorigin="anonymous"
+    />
+
+    <!-- jquery emoji picker
+    <link rel="stylesheet" type="text/css" href="css/jquery.emojipicker.css" />
+ -->
+    <!-- Jquery -->
+    <script
+      type="text/javascript"
+      src="https://code.jquery.com/jquery-1.11.2.min.js"
+    ></script>
+
+    <!-- Emoji Data 
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="css/jquery.emojipicker.tw.css"
+    />-->
     <title>Socket.IO chat</title>
     <style>
       * {
@@ -21,7 +44,7 @@
       form input {
         border: 0;
         padding: 10px;
-        width: 90%;
+        width: 70%;
         margin-right: 0.5%;
       }
       form button {
@@ -41,26 +64,140 @@
       #messages li:nth-child(odd) {
         background: #eee;
       }
+      p {
+        margin-bottom: 10px;
+      }
+      .chat-section {
+        display: none;
+      }
     </style>
   </head>
   <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
+    <div style="display: flex">
+      <div style="width: 20%; border-right: 1px solid black; margin-left: 5px">
+        <p><b>ROOMS</b></p>
+        <div id="rooms">room0</div>
+      </div>
+      <!--  -->
+      <div>
+        <div id="userRegistration">
+          <h2>Register Yourself First!</h2>
+
+          <div class="row">
+            <div class="col-md-11">
+              <div class="well">
+                <label>Enter UserName: </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Enter user name"
+                  id="registeredUser"
+                  onkeydown="if(event.keyCode == 13) { $('#regUserSubmitBtn').click();}"
+                />
+                <br />
+                <button
+                  type="button"
+                  class="btn btn-default btn-success"
+                  id="regUserSubmitBtn"
+                >
+                  SUBMIT
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--  -->
+        <div class="chat-section">
+          <ul id="conversation"></ul>
+          <form>
+            <input id="data" autocomplete="off" /><button id="datasend">
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
     <script>
-      $(function () {
-        var socket = io();
-        $("form").submit(function (e) {
-          e.preventDefault(); // prevents page reloading
-          socket.emit("chat message", $("#m").val());
-          $("#m").val("");
-          return false;
+      $(document).ready(function () {
+        $userRegistration = $("#userRegistration");
+        $registeredUser = $("#registeredUser");
+        $registeredRoom = $("#registeredRoom");
+        $regUserSubmitBtn = $("#regUserSubmitBtn");
+        $sentMessage = $("#sentMessage");
+        /* SECTION - User Registration */
+        $regUserSubmitBtn.on("click", function () {
+          var currentUser = $registeredUser.val();
+
+          if (currentUser == "") {
+            alert("please enter a name");
+            return;
+          }
         });
-        socket.on("chat message", function (msg) {
-          $("#messages").append($("<li>").text(msg));
+      });
+    </script>
+    <script>
+      var socket = io.connect("http://localhost:3100");
+
+      $(document).ready(function () {
+        $("#regUserSubmitBtn").click(function () {
+          $("#userRegistration").hide();
+          $(".chat-section").show();
+        });
+      });
+
+      socket.on("connect", function () {
+        $(document).ready(function () {
+          $userRegistration = $("#userRegistration");
+          $registeredUser = $("#registeredUser");
+          $regUserSubmitBtn = $("#regUserSubmitBtn");
+          $sentMessage = $("#sentMessage");
+          /* SECTION - User Registration */
+          $regUserSubmitBtn.on("click", function () {
+            var currentUser = $registeredUser.val();
+            if (currentUser == "") {
+              alert("please enter a name");
+              return;
+            }
+            socket.emit("adduser", currentUser);
+          });
+        });
+      });
+
+      // listener, whenever the server emits 'updatechat', this updates the chat body
+      socket.on("updatechat", function (username, data) {
+        $("#conversation").append("<b>" + username + ":</b> " + data + "<br>");
+      });
+
+      socket.on("updaterooms", function (rooms, current_room) {
+        $("#rooms").empty();
+        $.each(rooms, function (key, value) {
+          if (value == current_room) {
+            $("#rooms").append("<div>" + value + "</div>");
+          } else {
+            $("#rooms").append(
+              '<div><a href="#" onclick="switchRoom(\'' +
+                value +
+                "')\">" +
+                value +
+                "</a></div>"
+            );
+          }
+        });
+      });
+      function switchRoom(room) {
+        socket.emit("switchRoom", room);
+      }
+      // on load of page
+      $(function () {
+        // when the client clicks SEND
+        $("#datasend").click(function () {
+          var message = $("#data").val();
+          $("#data").val("");
+          // tell server to execute 'sendchat' and send along one parameter
+          socket.emit("sendchat", message);
         });
       });
     </script>
