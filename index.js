@@ -1,69 +1,51 @@
-const express = require("express");
-var app = require("express")();
-var http = require("http").createServer(app);
-var io = require("socket.io")(http);
-const fetch = require("node-fetch");
-app.use(express.static("public"));
-const fs = require("fs");
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+const http = require('http');
+const fetch = require('node-fetch');
+const express = require('express');
+const socketio = require('socket.io');
+const cors = require('cors');
+const { addUser, removeUser, getUser, getUsersInRoom } = require('./users');
+const router = require('./router');
+const fs = require('fs');
+const app = express();
+const server = http.createServer(app);
+const io = socketio(server);
+app.use(cors());
+app.use(router);
+io.on('connect', (socket) => {
+  socket.on('join', ({ name, room }, callback) => {
+    const { error, user } = addUser({ id: socket.id, name, room });
+    if(error) return callback(error);
+    socket.join(user.room);
+    socket.emit('message', { user: 'admin', text: `${user.name}, welcome to room ${user.room}.`});
+    socket.broadcast.to(user.room).emit('message', { user: 'admin', text: `${user.name} has joined!` });
+    io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room) });
+    callback();
+  });
+  
+  socket.on('sendMessage', async (message, callback) => {
+    const user = getUser(socket.id);
+    if(message === "/hej"){
+      io.to(user.room).emit('message', { user: user.name, text:'hej på dig'});
+    }
+    else if(message == "/random"){
+      url ='https://randomuser.me/api/?results=1'
+        const response = await fetch(url);
+        const data = await response.json();
+        const Large  = data.results[0].picture.large;
+      io.to(user.room).emit('message', { user: user.name, text: message,img:Large});
+    }
+    else{
+      io.to(user.room).emit('message', { user: user.name, text: message });
+    }
+    callback();
+  });
+  
+  socket.on('disconnect', () => {
+    const user = removeUser(socket.id);
+    if(user) {
+      io.to(user.room).emit('message', { user: 'Admin', text: `${user.name} has left.` });
+      io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room)});
+    }
+  })
 });
-var usernames = {};
-var rooms = ["room1", "Nature", "City"];
-//
-
-//
-io.sockets.on("connection", function (socket) {
-  socket.on("adduser", function (username) {
-    socket.username = username;
-    socket.room = "room1";
-    usernames[username] = username;
-    socket.join("room1");
-    socket.emit("updatechat", "SERVER", "you have connected to room1");
-    socket.broadcast
-      .to("room1")
-      .emit("updatechat", "SERVER", username + " has connected to this room");
-    socket.emit("updaterooms", rooms, "room1");
-  });
-  socket.on("sendchat", function (data) {
-    io.sockets.in(socket.room).emit("updatechat", socket.username, data);
-  });
-  //
-  io.on("connection", function (socket) {
-    fs.readFile("image.png", function (err, data) {
-      socket.emit("imageConversionByClient", { image: true, buffer: data });
-      socket.emit(
-        "imageConversionByServer",
-        "data:image/png;base64," + data.toString("base64")
-      );
-    });
-  });
-  //
-  socket.on("switchRoom", function (newroom) {
-    socket.leave(socket.room);
-    socket.join(newroom);
-    socket.emit("updatechat", "SERVER", "you have connected to " + newroom);
-    socket.broadcast
-      .to(socket.room)
-      .emit("updatechat", "SERVER", socket.username + " has left this room");
-    socket.room = newroom;
-    socket.broadcast
-      .to(newroom)
-      .emit("updatechat", "SERVER", socket.username + " has joined this room");
-    socket.emit("updaterooms", rooms, newroom);
-  });
-  socket.on("disconnect", function () {
-    delete usernames[socket.username];
-    io.sockets.emit("updateusers", usernames);
-    socket.broadcast.emit(
-      "updatechat",
-      "SERVER",
-      socket.username + " has disconnected"
-    );
-    socket.leave(socket.room);
-  });
-});
-
-http.listen(3100, () => {
-  console.log("listening on *:3100");
-});
+server.listen(process.env.PORT || 5000, () => console.log(`Server has started.`));
