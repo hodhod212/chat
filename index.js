@@ -64,6 +64,6 @@ io.on("connect", (socket) => {
     }
   });
 });
-server.listen(process.env.PORT || 5001, () =>
+server.listen(process.env.PORT || 5000, () =>
   console.log(`Server has started.`)
 );

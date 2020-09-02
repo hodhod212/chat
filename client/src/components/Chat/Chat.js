@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import queryString from "query-string";
 import io from "socket.io-client";
-import FetchRandomUser from "./FetchRandomUser";
 import TextContainer from "../TextContainer/TextContainer";
 import Messages from "../Messages/Messages";
 import InfoBar from "../InfoBar/InfoBar";
@@ -14,7 +13,9 @@ const Chat = ({ location }) => {
   const [users, setUsers] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const ENDPOINT = "https://server-212.herokuapp.com/";
+  //const ENDPOINT = "https://server-212.herokuapp.com/";
+  //We have deployed both server and client in heroku
+  const ENDPOINT = "localhost:5000";
   useEffect(() => {
     const { name, room } = queryString.parse(location.search);
     socket = io(ENDPOINT);
